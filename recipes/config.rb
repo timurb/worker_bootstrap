@@ -14,7 +14,7 @@ if node[:worker][:aws_key] && node[:worker][:aws_secret_key]
     })
   end
 else
-  Chef::Log.warning("No aws_key or aws_secret_key specified")
+  Chef::Log.warn("No aws_key or aws_secret_key specified")
 end
 
 ##### The following could be done by means of ruby but that will require installing additional gems
@@ -37,7 +37,5 @@ end
 
 require 'yaml'
 
-config = YAML.load( File.open( node[:worker][:config_path] )).symbolize_keys
-config.each_key do |key|
-  node.set[:worker][:config_data][key] = config[key]
-end
+config = YAML.load( File.open( node[:worker][:config_path] ))
+node.set[:worker][:config_data] = config
