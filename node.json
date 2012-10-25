@@ -1,0 +1,9 @@
+{
+  "run_list": [ "recipe[worker_bootstrap]" ],
+  "worker": {
+    "aws_key": "CHANGE ME",
+    "aws_secret_key": "CHANGE ME",
+    "bucket": "worker-test",
+    "remote_path": "/worker.yaml"
+  }
+}
