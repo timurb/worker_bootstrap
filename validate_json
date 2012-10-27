@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+#!/usr/bin/env ruby
+
+require 'json'
+
+begin
+  JSON.parse(File.read(ARGV[0]))
+rescue => e
+  p e
+  exit 1
+end
+exit 0
