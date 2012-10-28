@@ -8,7 +8,8 @@ Create instance from ami-c1aaabb5 in the EU-WEST-1 region:
 (To get the current uptodate AMI id browse http://cloud-images.ubuntu.com/releases/precise/release/)
 
     ec2-run-instances ami-c1aaabb5 -t m1.medium --region eu-west-1 --key timur 
-You'd better didn't use t1.micro as I did as it takes ages (~50min) to build ruby on that size of the box.
+You'd better don't use t1.micro as it takes ages (~50min) to build ruby on that size of the box.
+When you finish building the AMI you'll be able to reuse the AMI for any size of the box including t1.micro
 
 Login into the instance
 
@@ -25,15 +26,20 @@ Login into the instance
     cd ruby-build
     ./install.sh
     ruby-build 1.9.3-p286 /usr/local/ruby-1.9.3-p286  # This takes long. Meanwhile have a cup of tea/coffee.
-    for file in /usr/local/ruby-1.9.3-p286/bin/*; do ln -s $file /usr/local/bin/; done   # create a symlinks to access ruby
-    ruby -v   # this should produce ruby 1.9.3p286
-    gem install --no-rdoc --no-ri bundler
-    gem install --no-rdoc --no-ri chef
-    for file in /usr/local/ruby-1.9.3-p286/bin/*; do ln -s $file /usr/local/bin/; done   # do symlinks once again to access chef
 
+    # create symlinks to access ruby
+    for file in /usr/local/ruby-1.9.3-p286/bin/*; do ln -s $file /usr/local/bin/; done   
+    # check that we have correct ruby installed
+    ruby -v
+    # install gems we need
+    gem install --no-rdoc --no-ri bundler chef
+    # do symlinks once again to access chef
+    for file in /usr/local/ruby-1.9.3-p286/bin/*; do ln -s $file /usr/local/bin/; done   
 
+    # install scripts to bootstrap worker
     git clone https://github.com/timurbatyrshin/worker_bootstrap.git /opt/worker_setup
-    vim /opt/worker_setup/node.json  # set the AWS access keys and bucket to retrieve config from (optional)
+    # set the AWS access keys and bucket to retrieve config from (optional)
+    vim /opt/worker_setup/node.json  
     cp /opt/worker_setup/worker-chef.conf /etc/init  # if you've used some dir other that /opt/worker_setup you'll need to fix that in the file
 
     ### Before taking a snapshot you need to do some cleaning
@@ -55,7 +61,7 @@ By now you should have the instance up which will run the worker bootstrap proce
 
 Take a snapshot of the instance into AMI
 
-    # Adjust AMI name and instance-id and run from your local desktop
+    # Adjust AMI name and instance-id and run the command from your local desktop
     ec2-create-image --region=eu-west-1 -n worker-2012-10-28 --no-reboot i-168d005d
 
 After image creation is finished you can terminate the instance used for creation and use that AMI to run your workers.
@@ -67,12 +73,13 @@ To run the instance with worker use the command like the following:
 
   ec2run ami-f7787b83 -t t1.micro --region=eu-west-1 --key=timur --user-data='http://www.domain.org/path/to/node.json'
 
-You could set config for chef in node.json during the instance creation or you can override those here by specifying HTTP URL
-holding the updated config. Please note that as it holds sensitive information like AWS keys it should have restricted access.
+You could set config for chef in node.json during the instance creation or you can override those here in user-data by
+specifying HTTP URL holding the updated config. Please note that as it holds sensitive information like AWS keys it
+should have restricted access.
 Example node.json lays beside in this repository.
 
-Take also a look at `worker_bootstrap/attributes/default.rb` as values for node.json could also be defined there. It is up
-to you which way of defining those you use.
+Take also a look at `worker_bootstrap/attributes/default.rb` as values for node.json could also be defined there.
+It is up to you which way of defining those you use.
 
 ## Under the cover
 
@@ -80,7 +87,7 @@ To ease possible troubleshooting here is the description of inner workings:
 
 * When instance boots it launches upstart script of worker-chef
 * The upstart script launches `/opt/worker_setup/run_chef.sh`
-* It downloads the node.json from the URL specified as an instance user-data param and if it is found and is a correct JSON it
+* It downloads the node.json from the URL specified as an instance user-data param and if it is found and is a valid JSON it
   replaces the default node.json lying beside with this updated one.
 * Chef-solo is started then which retrieves YAML config for the worker from S3, does bundle install and starts the number
   of workers matching the number of cores. It *requires* bundler binary to be located at `/usr/local/bin/bundle`.
