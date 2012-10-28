@@ -40,7 +40,7 @@ end
 
 
 node[:cpu][:total].times do
-  execute "nohup bundle exec #{config["START_FILE"]} &" do
+  execute "bundle exec #{config["START_FILE"]} &" do
     cwd config["CODE_PATH"]
     environment config
     action :run
