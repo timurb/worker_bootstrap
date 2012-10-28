@@ -40,7 +40,7 @@ end
 
 
 node[:cpu][:total].times do
-  execute "bundle exec #{config["START_FILE"]} &" do
+  execute "start-stop-daemon --exec /usr/local/bin/bundle exec #{config["START_FILE"]} -d #{config["CODE_PATH"]} --start -b" do
     cwd config["CODE_PATH"]
     environment config
     action :run
